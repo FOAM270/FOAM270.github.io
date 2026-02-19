@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love Jar Ultimate 💖</title>
+
+<style>
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at bottom, #0f0f2e, #000010);
+    color: white;
+    position: relative;
+    transition: background 1s ease;
+}
+
+/* ===== ดาวพื้นหลัง ===== */
+.stars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 6px white, 0 0 12px #88ccff;
+    animation: twinkle infinite alternate ease-in-out;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
+}
+
+/* ===== ดาวตก ===== */
+.shooting-star {
+    position: absolute;
+    width: 2px;
+    height: 120px;
+    background: linear-gradient(-45deg, white, transparent);
+    opacity: 0;
+    transform: rotate(45deg);
+    animation: shoot 3s linear forwards;
+}
+
+@keyframes shoot {
+    0% { opacity: 0; transform: translate(0,0) rotate(45deg); }
+    10% { opacity: 1; }
+    100% { transform: translate(600px,600px) rotate(45deg); opacity: 0; }
+}
+
+/* ===== เนื้อหา ===== */
+.content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding-top: 20px;
+}
+
+h1 {
+    margin-top: 20px;
+    color: #ff99ff;
+    text-shadow: 0 0 15px #ff66cc;
+}
+
+.jar-container {
+    position: relative;
+    width: 300px;
+    height: 450px;
+    margin: auto;
+}
+
+.jar {
+    width: 300px;
+    height: 360px;
+    background: rgba(255,255,255,0.12);
+    border: 4px solid #ff66cc;
+    border-radius: 0 0 150px 150px;
+    position: absolute;
+    bottom: 0;
+    overflow: hidden;
+}
+
+.lid {
+    width: 200px;
+    height: 60px;
+    background: #ff66cc;
+    border-radius: 20px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.heart {
+    position: absolute;
+    font-size: 30px;
+    animation: fallSmooth 1.6s cubic-bezier(.25,.8,.25,1) forwards;
+}
+
+@keyframes fallSmooth {
+    0% { transform: translateY(-100px) scale(0.8); opacity: 0; }
+    70% { transform: translateY(20px) scale(1.1); opacity: 1; }
+    100% { transform: translateY(0px) scale(1); }
+}
+
+button {
+    margin-top: 15px;
+    padding: 12px 26px;
+    font-size: 14px;
+    background: linear-gradient(45deg,#ff3399,#ff66cc);
+    border: none;
+    border-radius: 30px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 0 15px #ff66cc;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: scale(1.08);
+}
+
+.reset-btn {
+    background: linear-gradient(45deg,#444,#888);
+}
+
+.counter {
+    margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="content">
+<h1>🌙 ขวดโหลของเมษา 💖</h1>
+
+<div class="jar-container">
+    <div class="lid"></div>
+    <div class="jar" id="jar"></div>
+</div>
+
+<button onclick="addHeart()">ส่งหัวใจ 💌</button>
+<button class="reset-btn" onclick="resetJar()">รีเซ็ตหัวใจ 🔒</button>
+
+<div class="counter">หัวใจทั้งหมด: <span id="count">0</span></div>
+</div>
+
+<script>
+
+// ===== ระบบหัวใจ =====
+let savedHearts = JSON.parse(localStorage.getItem("hearts")) || [];
+const jar = document.getElementById("jar");
+const counter = document.getElementById("count");
+
+savedHearts.forEach(data => {
+    createHeart(data.left, data.bottom, false);
+});
+counter.innerText = savedHearts.length;
+updateBackground();
+
+// ===== ระบบดาวตก =====
+let shootingInterval = null;
+
+function startShootingStars() {
+    if (shootingInterval !== null) return;
+
+    shootingInterval = setInterval(() => {
+        createShootingStar();
+    }, 4000);
+}
+
+function createShootingStar() {
+    let star = document.createElement("div");
+    star.className = "shooting-star";
+    star.style.top = Math.random() * 200 + "px";
+    star.style.left = Math.random() * window.innerWidth + "px";
+    document.body.appendChild(star);
+
+    setTimeout(() => star.remove(), 3000);
+}
+
+// ⭐ ถ้าโหลดหน้าแล้วมีครบ 100 แล้ว ให้เริ่มทันที
+if (savedHearts.length >= 100) {
+    startShootingStars();
+}
+
+function addHeart() {
+    let left = Math.random() * 260;
+    let bottom = Math.random() * 280;
+
+    createHeart(left, bottom, true);
+
+    savedHearts.push({ left, bottom });
+    localStorage.setItem("hearts", JSON.stringify(savedHearts));
+    counter.innerText = savedHearts.length;
+
+    updateBackground();
+    checkMilestone();
+}
+
+function createHeart(left, bottom, animate) {
+    let heart = document.createElement("div");
+    heart.className = "heart";
+    heart.innerHTML = randomHeart();
+    heart.style.left = left + "px";
+    heart.style.bottom = bottom + "px";
+    if (!animate) heart.style.animation = "none";
+    jar.appendChild(heart);
+}
+
+function randomHeart() {
+    const hearts = ["💖","💗","💘","💝","💞"];
+    return hearts[Math.floor(Math.random() * hearts.length)];
+}
+
+function updateBackground() {
+    let count = savedHearts.length;
+
+    if (count >= 80) {
+        document.body.style.background =
+        "radial-gradient(circle at bottom, #3a005f, #12002b)";
+    }
+    if (count >= 100) {
+        document.body.style.background =
+        "radial-gradient(circle at bottom, #ff0080, #330033)";
+    }
+}
+
+// ===== เช็ค milestone =====
+function checkMilestone() {
+    let count = savedHearts.length;
+
+    if (count % 100 === 0) {
+        let milestone = count / 100;
+        triggerCelebration(milestone);
+    }
+
+    // ⭐ เริ่มดาวตกตอนครบ 100
+    if (count >= 100) {
+        startShootingStars();
+    }
+}
+
+// ===== เอฟเฟค milestone =====
+function triggerCelebration(level) {
+
+    const messages = [
+        "ว้าววว 💖 100 ดวงแล้ววว เก่งที่สุดเลยย 🥰",
+        "200 ดวงแล้วน้าาา 💕 รักเพิ่มเป็นสองเท่าเลย 💘",
+        "300 ดวงงง 💞 หัวใจล้นโหลแล้วววว 😍",
+        "400 ดวง 💗 รักกันไม่มีวันหมดเลย 🥹",
+        "500 ดวง 💝 ครึ่งพันแล้ววว เบบี๋เก่งมากกก ✨"
+    ];
+
+    let messageText = messages[(level - 1) % messages.length];
+
+    let message = document.createElement("div");
+    message.innerText = messageText;
+    message.style.position = "fixed";
+    message.style.top = "50%";
+    message.style.left = "50%";
+    message.style.transform = "translate(-50%, -50%) scale(0.5)";
+    message.style.fontSize = "22px";
+    message.style.textAlign = "center";
+    message.style.color = "#fff";
+    message.style.textShadow = "0 0 30px #ff66cc";
+    message.style.zIndex = "9999";
+    message.style.transition = "all 0.5s ease";
+    document.body.appendChild(message);
+
+    setTimeout(() => {
+        message.style.transform = "translate(-50%, -50%) scale(1)";
+    }, 50);
+
+    if (level % 3 === 1) explodeCircle();
+    else if (level % 3 === 2) explodeRain();
+    else explodeSpiral();
+
+    setTimeout(() => message.remove(), 3000);
+}
+
+function explodeCircle() {
+    for (let i = 0; i < 120; i++) {
+        createExplosionParticle(Math.random() * 360, 400);
+    }
+}
+
+function explodeRain() {
+    for (let i = 0; i < 100; i++) {
+        let heart = document.createElement("div");
+        heart.innerHTML = randomHeart();
+        heart.style.position = "fixed";
+        heart.style.left = Math.random() * window.innerWidth + "px";
+        heart.style.top = "-50px";
+        heart.style.fontSize = "30px";
+        heart.style.transition = "top 2s linear, opacity 2s";
+        heart.style.zIndex = "9998";
+        document.body.appendChild(heart);
+
+        setTimeout(() => {
+            heart.style.top = window.innerHeight + "px";
+            heart.style.opacity = 0;
+        }, 20);
+
+        setTimeout(() => heart.remove(), 2000);
+    }
+}
+
+function explodeSpiral() {
+    for (let i = 0; i < 150; i++) {
+        let angle = i * 0.3;
+        let distance = i * 2;
+        createExplosionParticle(angle * 57.3, distance);
+    }
+}
+
+function createExplosionParticle(angleDeg, distance) {
+
+    let boom = document.createElement("div");
+    boom.innerHTML = randomHeart();
+    boom.style.position = "fixed";
+    boom.style.left = "50%";
+    boom.style.top = "50%";
+    boom.style.fontSize = "30px";
+    boom.style.transform = "translate(-50%, -50%)";
+    boom.style.transition = "all 1.6s ease-out";
+    boom.style.zIndex = "9998";
+    document.body.appendChild(boom);
+
+    let angle = angleDeg * (Math.PI / 180);
+    let x = Math.cos(angle) * distance;
+    let y = Math.sin(angle) * distance;
+
+    setTimeout(() => {
+        boom.style.transform = `translate(${x}px, ${y}px) scale(1.4)`;
+        boom.style.opacity = 0;
+    }, 20);
+
+    setTimeout(() => boom.remove(), 1600);
+}
+
+function resetJar() {
+    let password = prompt("กรุณาใส่รหัสผ่าน 🔐");
+    if (password === "0948744392") {
+        localStorage.removeItem("hearts");
+        savedHearts = [];
+        jar.innerHTML = "";
+        counter.innerText = 0;
+        document.body.style.background =
+        "radial-gradient(circle at bottom, #0f0f2e, #000010)";
+    } else {
+        alert("รหัสผ่านไม่ถูกต้อง ❌");
+    }
+}
+
+</script>
+
+
+
+</body>
+</html>
